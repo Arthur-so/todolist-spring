@@ -3,9 +3,14 @@ package br.com.arthuroliveira.todolist.filter;
 import java.io.IOException;
 import java.util.Base64;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
+import at.favre.lib.crypto.bcrypt.BCrypt.Result;
+import br.com.arthuroliveira.todolist.user.IUserRepository;
+import br.com.arthuroliveira.todolist.user.UserModel;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,6 +18,9 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class FilterTaskAuth extends OncePerRequestFilter {
+
+    @Autowired
+    IUserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -31,7 +39,20 @@ public class FilterTaskAuth extends OncePerRequestFilter {
                 System.out.println(username);
                 System.out.println(password);
 
-                filterChain.doFilter(request, response);
+                // Validar usuário
+                UserModel user = this.userRepository.findByUsername(username);
+                if (user == null) {
+                    response.sendError(401);
+                } else {
+                    // Validar senha
+                    Result passwordVerify = BCrypt.verifyer().verify(password.toCharArray(), user.getPassword());
+                    if (passwordVerify.verified) {
+                        filterChain.doFilter(request, response);
+                    } else {
+                        response.sendError(401);
+                    }
+                }
+               
     }
     
 }
