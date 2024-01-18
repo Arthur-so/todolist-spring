@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.arthuroliveira.todolist.utils.Utils;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
@@ -50,14 +51,17 @@ public class TaskController {
     }
 
     @PutMapping("{id}")
-    public TaskModel update(@RequestBody TaskModel taskModel, HttpServletRequest request, @PathVariable UUID id) {
-        UUID idUser =  (UUID) request.getAttribute("idUser");
-        taskModel.setIdUser(idUser);
+    public ResponseEntity update(@RequestBody TaskModel taskModel, HttpServletRequest request, @PathVariable UUID id) {
+        
+        TaskModel task = this.taskRepository.findById(id).orElse(null);
 
-        taskModel.setId(id);
-        taskModel.setIdUser(idUser);
+        if (task == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Task não existe.");
+        }
 
-        return this.taskRepository.save(taskModel);
+        Utils.copyNonNullProperties(taskModel, task);
+
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(this.taskRepository.save(task));
     }
     
 }
