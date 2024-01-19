@@ -33,11 +33,13 @@ public class TaskController {
         LocalDateTime currentDate = LocalDateTime.now();
         if (currentDate.isAfter(taskModel.getStartAt()) ||
         currentDate.isAfter(taskModel.getEndAt())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Data de inìcio deve ser posterior a data atual.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).
+            body("Data de inìcio deve ser posterior a data atual.");
         }
 
         if (taskModel.getStartAt().isAfter(taskModel.getEndAt())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Data de inìcio deve ser anterior a data de término.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).
+            body("Data de inìcio deve ser anterior a data de término.");
         }
 
         TaskModel task = this.taskRepository.save(taskModel);
@@ -56,7 +58,15 @@ public class TaskController {
         TaskModel task = this.taskRepository.findById(id).orElse(null);
 
         if (task == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Task não existe.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).
+            body("Task não existe.");
+        }
+
+        UUID idUser = (UUID) request.getAttribute("idUser");
+        
+        if (!task.getIdUser().equals(idUser)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).
+            body("Usuário não tem permissão para alterar essa tarefa.");
         }
 
         Utils.copyNonNullProperties(taskModel, task);
